@@ -1121,7 +1121,7 @@ namespace AMSReverseProxy.SmoothHelper
         /// </summary>
         /// <param name=""></param>
         /// <returns>true if successful</returns>
-        private bool ParseSmoothManifest(byte[] manifestBuffer)
+        public bool ParseSmoothManifest(byte[] manifestBuffer)
         {
             bool bResult = false;
             if (manifestBuffer != null)

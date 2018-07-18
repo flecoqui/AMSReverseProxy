@@ -115,6 +115,66 @@ namespace AMSReverseProxy
             }
             return result;
         }
+        public string GetAMSRootPath(string Path)
+        {
+            string result = string.Empty;
+            const string amsSuffix = "ism/manifest";
+            if (!string.IsNullOrEmpty(Path))
+            {
+                int pos = Path.IndexOf(amsSuffix);
+                if(pos>0)
+                {
+                    result = Path.Substring(0, pos + amsSuffix.Length);
+                }
+            }
+            return result;
+        }
+        public Uri GetAMSRootUri(Uri inputUri)
+        {
+            const string hlsSuffix = "(format=m3u8-aapl)";
+            const string dashSuffix = "(format=mpd-time-csf)";
+
+            Uri result = null;
+
+            if(inputUri!=null)
+            {
+                try
+                {
+                    if ((inputUri.ToString().EndsWith("ism/manifest", StringComparison.InvariantCultureIgnoreCase)) ||
+                       (inputUri.ToString().EndsWith("isml/manifest", StringComparison.InvariantCultureIgnoreCase)))
+                    {
+                        result = inputUri;
+                    }
+                    else if ((inputUri.ToString().EndsWith("ism/manifest" + hlsSuffix, StringComparison.InvariantCultureIgnoreCase)) ||
+                       (inputUri.ToString().EndsWith("isml/manifest" + hlsSuffix, StringComparison.InvariantCultureIgnoreCase)))
+                    {
+                        result = new Uri(inputUri.ToString().Substring(0, inputUri.ToString().Length - hlsSuffix.Length));
+                    }
+                    if ((inputUri.ToString().EndsWith("ism/manifest" + dashSuffix, StringComparison.InvariantCultureIgnoreCase)) ||
+                       (inputUri.ToString().EndsWith("isml/manifest" + dashSuffix, StringComparison.InvariantCultureIgnoreCase)))
+                    {
+                        result = new Uri(inputUri.ToString().Substring(0, inputUri.ToString().Length - dashSuffix.Length));
+                    }
+                }
+                catch(Exception)
+                {
+                    result = null;
+                }
+
+            }
+            return result;
+        }
+        //
+        bool IsHLSManifestWithSubtitle(string m3u8)
+        {
+            bool result = false;
+            if(!string.IsNullOrEmpty(m3u8))
+            {
+                if (m3u8.IndexOf("#EXT-X-MEDIA:TYPE=SUBTITLES") > 0)
+                    result = true; 
+            }
+            return result;
+        }
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
@@ -122,121 +182,183 @@ namespace AMSReverseProxy
             {
                 app.UseDeveloperExceptionPage();
             }
-
+            string localDNSName = Program.Configuration["localDNSName"];
+            string remoteDNSName = Program.Configuration["remoteDNSName"];
+            Dictionary<Uri, SmoothHelper.SubtitleTrack> subTitleTracks = new Dictionary<Uri, SmoothHelper.SubtitleTrack>();
             app.Run(async (context) =>
             {
+                
                 string Path = context.Request.Path;
                 if (string.IsNullOrEmpty(Path))
-                    await context.Response.WriteAsync("Hello World!");
+                    await context.Response.WriteAsync("AMS Reverse Proxy");
                 else
                 {
-                    string Host = "http://localhost/";
-                 //   string Host = "http://srgtest-accountdigitalinnovation-euwe.channel.media.azure.net/";
+                    //string Host = "http://localhost/";
+                    string Host = string.Empty;
+
+                    if(context.Request.IsHttps)
+                        Host = "https://" + remoteDNSName + "/";
+                    else
+                        Host = "http://" + remoteDNSName + "/";
+                    //string Host = "http://testamsmedia.streaming.mediaservices.windows.net/";
+
+                    // 7155b94b-f47e-47e5-8265-622d3fcf6e9d/5890621e-c209-4abe-a524-7bd6723e7851.ism/manifest(format=m3u8-aapl)
+                    //                  https://testamsmedia.streaming.mediaservices.windows.net/7155b94b-f47e-47e5-8265-622d3fcf6e9d/5890621e-c209-4abe-a524-7bd6723e7851.ism/manifest(format=m3u8-aapl)
+
+
+                    //                    string Host = "http://testsmoothlive-testamsmedia.channel.mediaservices.windows.net/";
+                    //                    string Host = "http://testsmoothlive-testamsmedia.channel.mediaservices.windows.net/preview.isml/manifest";
+                    //    string Host = "http://srgtest-accountdigitalinnovation-euwe.channel.media.azure.net/";
                     //string Host = "http://amssamples.streaming.mediaservices.windows.net/";
-                    System.Net.Http.HttpClient client = new System.Net.Http.HttpClient();
-                    var response = await client.GetAsync(new Uri(Host + Path));
-                    if (response != null)
+                    Uri requestUri = null;
+
+                    Uri rootUri = null;
+                    string rootPath = null;
+                    try
+                    {
+                        requestUri = new Uri(Host + Path);
+                    }
+                    catch(Exception)
                     {
 
-                        context.Response.ContentType = response.Content.Headers.ContentType.MediaType;
-                        context.Response.ContentLength = response.Content.Headers.ContentLength.Value;
-                        if(IsSmoothStreamingManifest(Host + Path, context.Response.ContentType))
+                    }
+                    rootUri = GetAMSRootUri(requestUri);
+                    rootPath = GetAMSRootPath(Path);
+                    if (rootUri != null)
+                    {
+                        // Azure Media Services request on manifest
+                        System.Net.Http.HttpClient client = new System.Net.Http.HttpClient();
+                        var response = await client.GetAsync(new Uri(Host + Path));
+                        if (response != null)
                         {
-                            System.Diagnostics.Debug.Write("SmoothStreaming Manifest: " + Host + Path + " ContentType: " + context.Response.ContentType);
 
-                            SmoothHelper.ManifestManager mm = SmoothHelper.ManifestManager.CreateManifestCache(new Uri(Host + Path), false, 5000000, 20);
-                            if(mm != null)
+                            context.Response.ContentType = response.Content.Headers.ContentType.MediaType;
+                            context.Response.ContentLength = response.Content.Headers.ContentLength.Value;
+                            if (IsSmoothStreamingManifest(Host + Path, context.Response.ContentType))
                             {
-                                if ((response.Headers.Location != null) && (response.Headers.Location != new Uri(Host + Path)))
+                                System.Diagnostics.Debug.Write("SmoothStreaming Manifest: " + Host + Path + " ContentType: " + context.Response.ContentType);
+
+                                SmoothHelper.ManifestManager mm = SmoothHelper.ManifestManager.CreateManifestCache(new Uri(Host + Path), false, 5000000, 20);
+                                if (mm != null)
                                 {
-                                    mm.RedirectUri = response.Headers.Location;
-                                    mm.RedirectBaseUrl = SmoothHelper.ManifestManager.GetBaseUri(mm.RedirectUri.AbsoluteUri);
+                                    if ((response.Headers.Location != null) && (response.Headers.Location != new Uri(Host + Path)))
+                                    {
+                                        mm.RedirectUri = response.Headers.Location;
+                                        mm.RedirectBaseUrl = SmoothHelper.ManifestManager.GetBaseUri(mm.RedirectUri.AbsoluteUri);
+                                    }
+                                    else
+                                    {
+                                        mm.RedirectBaseUrl = string.Empty;
+                                        mm.RedirectUri = null;
+                                    }
+                                    mm.BaseUrl = SmoothHelper.ManifestManager.GetBaseUri(new Uri(Host + Path).AbsoluteUri);
+                                    bool result = mm.ParseManifest(await response.Content.ReadAsByteArrayAsync());
+                                    if (result == true)
+                                    {
+                                        System.Diagnostics.Debug.Write("SmoothStreaming Manifest: " + Host + Path + " correctly downloaded and parsed ");
+
+                                        // Download Text Chunks
+                                        if ((mm.TextChunkListList != null) && (mm.TextChunkListList.Count > 0))
+                                        {
+                                            // Something to download
+                                            if (!mm.IsDownloadCompleted(mm.TextChunkListList))
+                                            {
+                                                System.Diagnostics.Debug.WriteLine(string.Format("{0:d/M/yyyy HH:mm:ss.fff}", DateTime.Now) + " downloadThread downloading text chunks for Manifest Uri: " + mm.ManifestUri.ToString());
+                                                foreach (var cl in mm.TextChunkListList)
+                                                {
+                                                    SmoothHelper.ChunkBuffer cb;
+                                                    while (cl.ChunksToReadQueue.TryDequeue(out cb))
+                                                    {
+                                                        string url = (string.IsNullOrEmpty(mm.RedirectBaseUrl) ? mm.BaseUrl : mm.RedirectBaseUrl) + "/" + cl.TemplateUrl.Replace("{start_time}", cb.Time.ToString());
+                                                        System.Diagnostics.Debug.WriteLine(string.Format("{0:d/M/yyyy HH:mm:ss.fff}", DateTime.Now) + " downloadThread downloading text chunks : " + url.ToString());
+                                                        cb.chunkBuffer = await mm.DownloadChunkAsync(new Uri(url));
+
+                                                        if (cb.IsChunkDownloaded())
+                                                        {
+                                                            ulong l = cb.GetLength();
+                                                            string text = ParseTTMLChunk(cb.chunkBuffer);
+                                                            double time = mm.TimescaleToHNS(cb.Time) / (SmoothHelper.ManifestManager.TimeUnit);
+
+                                                            System.Diagnostics.Debug.Write("TTML file at : " + time.ToString() + " seconds \r\n" + text);
+                                                            System.Text.Encoding.UTF8.GetBytes(text);
+                                                            SmoothHelper.TTMLSubtitles tTMLSubtitles = new SmoothHelper.TTMLSubtitles(time);
+                                                            if (tTMLSubtitles != null)
+                                                            {
+                                                                if (tTMLSubtitles.ParseTTMLSubtitles(System.Text.Encoding.UTF8.GetBytes(text)) == true)
+                                                                {
+                                                                    if (tTMLSubtitles.subtitleList != null)
+                                                                    {
+                                                                        long count = tTMLSubtitles.subtitleList.LongCount();
+                                                                        System.Diagnostics.Debug.WriteLine(string.Format("{0:d/M/yyyy HH:mm:ss.fff}", DateTime.Now) + count.ToString() + " subtitles found in the chunk");
+                                                                    }
+                                                                }
+                                                            }
+                                                            cl.InputBytes += l;
+                                                            cl.InputChunks++;
+
+                                                            cl.ChunksQueue.Enqueue(cb);
+                                                        }
+                                                    }
+                                                }
+                                                System.Diagnostics.Debug.WriteLine(string.Format("{0:d/M/yyyy HH:mm:ss.fff}", DateTime.Now) + " downloadThread downloading text chunks done for Uri: " + mm.ManifestUri.ToString());
+                                            }
+                                            else
+                                            {
+                                                if (mm.IsLive)
+                                                    result = true;
+                                            }
+                                        }
+                                    }
+                                    context.Response.Redirect(Host + Path);
+                                    await response.Content.CopyToAsync(context.Response.Body);
+                                    //var buffer = mm.UpdateSmoothManifestWithAbsoluteUri(await response.Content.ReadAsByteArrayAsync());
+
+                                    //using (var manifestStream = new System.IO.MemoryStream(buffer))
+                                    //{
+                                    //    context.Response.ContentLength = buffer.LongLength;
+                                    //    await manifestStream.CopyToAsync(context.Response.Body);
+                                    //}
+                                }
+                            }
+                            else if (IsHLSManifest(Host + Path, context.Response.ContentType))
+                            {
+                                System.Diagnostics.Debug.Write("HLS Manifest: " + Host + Path + " ContentType: " + context.Response.ContentType);
+
+                                string hlsManifest = await response.Content.ReadAsStringAsync();
+                                bool result = IsHLSManifestWithSubtitle(hlsManifest);
+                                if (result == true)
+                                {
+                                    // Subtitles already present nothing to do
+                                    context.Response.Redirect(Host + Path);
+                                    await response.Content.CopyToAsync(context.Response.Body);
                                 }
                                 else
                                 {
-                                    mm.RedirectBaseUrl = string.Empty;
-                                    mm.RedirectUri = null;
+                                    string lang = "en";
+                                    string name = "english";
+                                    string subtitleUri = "http://" + localDNSName + "/" + rootPath + "/subtitles/" + lang + "_index.m3u8";
+                                    hlsManifest += "\r\n#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID=\"sub1\",NAME=\"" + name + "\",LANGUAGE=\"" + lang + "\",AUTOSELECT=YES,DEFAULT=YES,FORCED=NO,URI=\"" + subtitleUri + "\"\r\n";
+                                    System.Net.Http.HttpContent content = new System.Net.Http.StringContent(hlsManifest);
+                                    context.Response.Redirect(Host + Path);
+                                    context.Response.ContentLength = content.Headers.ContentLength;
+                                    context.Response.ContentType = response.Content.Headers.ContentType.ToString();
+                                    await content.CopyToAsync(context.Response.Body);
                                 }
-                                mm.BaseUrl = SmoothHelper.ManifestManager.GetBaseUri(new Uri(Host + Path).AbsoluteUri);
-                                bool result = mm.ParseManifest(await response.Content.ReadAsByteArrayAsync());
-                                if(result == true)
-                                {
-                                    System.Diagnostics.Debug.Write("SmoothStreaming Manifest: " + Host + Path + " correctly downloaded and parsed ");
-                                    
-                                    // Download Text Chunks
-                                    if ((mm.TextChunkListList != null) && (mm.TextChunkListList.Count > 0))
-                                    {
-                                        // Something to download
-                                        if (!mm.IsDownloadCompleted(mm.TextChunkListList))
-                                        {
-                                            System.Diagnostics.Debug.WriteLine(string.Format("{0:d/M/yyyy HH:mm:ss.fff}", DateTime.Now) + " downloadThread downloading text chunks for Manifest Uri: " + mm.ManifestUri.ToString());
-                                            foreach (var cl in mm.TextChunkListList)
-                                            {
-                                                SmoothHelper.ChunkBuffer cb;
-                                                while (cl.ChunksToReadQueue.TryDequeue(out cb))
-                                                {
-                                                    string url = (string.IsNullOrEmpty(mm.RedirectBaseUrl) ? mm.BaseUrl : mm.RedirectBaseUrl) + "/" + cl.TemplateUrl.Replace("{start_time}", cb.Time.ToString());
-                                                    System.Diagnostics.Debug.WriteLine(string.Format("{0:d/M/yyyy HH:mm:ss.fff}", DateTime.Now) + " downloadThread downloading text chunks : " + url.ToString());
-                                                    cb.chunkBuffer = await mm.DownloadChunkAsync(new Uri(url));
-
-                                                    if (cb.IsChunkDownloaded())
-                                                    {
-                                                        ulong l = cb.GetLength();
-                                                        string text = ParseTTMLChunk(cb.chunkBuffer);
-                                                        double time = mm.TimescaleToHNS(cb.Time) / (SmoothHelper.ManifestManager.TimeUnit);
-                                                        
-                                                        System.Diagnostics.Debug.Write("TTML file at : " + time.ToString() + " seconds \r\n" + text );
-                                                        System.Text.Encoding.UTF8.GetBytes(text);
-                                                        SmoothHelper.TTMLSubtitles tTMLSubtitles = new SmoothHelper.TTMLSubtitles(time);
-                                                        if(tTMLSubtitles!=null)
-                                                        {
-                                                            if(tTMLSubtitles.ParseTTMLSubtitles(System.Text.Encoding.UTF8.GetBytes(text))==true)
-                                                            {
-                                                                if (tTMLSubtitles.subtitleList != null)
-                                                                {
-                                                                    long count = tTMLSubtitles.subtitleList.LongCount();
-                                                                    System.Diagnostics.Debug.WriteLine(string.Format("{0:d/M/yyyy HH:mm:ss.fff}", DateTime.Now) + count.ToString() + " subtitles found in the chunk");
-                                                                }
-                                                            }
-                                                        }
-                                                        cl.InputBytes += l;
-                                                        cl.InputChunks++;
-
-                                                        cl.ChunksQueue.Enqueue(cb);
-                                                    }
-                                                }
-                                            }                                       
-                                            System.Diagnostics.Debug.WriteLine(string.Format("{0:d/M/yyyy HH:mm:ss.fff}", DateTime.Now) + " downloadThread downloading text chunks done for Uri: " + mm.ManifestUri.ToString());
-                                        }
-                                        else
-                                        {
-                                            if (mm.IsLive)
-                                                result = true;
-                                        }
-                                    }
-                                }
+                            }
+                            else if (IsDASHManifest(Host + Path, context.Response.ContentType))
+                            {
+                                System.Diagnostics.Debug.Write("DASH Manifest: " + Host + Path + " ContentType: " + context.Response.ContentType);
                                 context.Response.Redirect(Host + Path);
                                 await response.Content.CopyToAsync(context.Response.Body);
-                                //var buffer = mm.UpdateSmoothManifestWithAbsoluteUri(await response.Content.ReadAsByteArrayAsync());
-
-                                //using (var manifestStream = new System.IO.MemoryStream(buffer))
-                                //{
-                                //    context.Response.ContentLength = buffer.LongLength;
-                                //    await manifestStream.CopyToAsync(context.Response.Body);
-                                //}
                             }
-                        }
-                        else if (IsHLSManifest(Host + Path, context.Response.ContentType))
-                        {
-                            System.Diagnostics.Debug.Write("HLS Manifest: " + Host + Path + " ContentType: " + context.Response.ContentType);
-                            await response.Content.CopyToAsync(context.Response.Body);
-                        }
-                        else if (IsDASHManifest(Host + Path, context.Response.ContentType))
-                        {
-                            System.Diagnostics.Debug.Write("DASH Manifest: " + Host + Path + " ContentType: " + context.Response.ContentType);
-                            await response.Content.CopyToAsync(context.Response.Body);
-                        }
+                            else
+                            {
+                                System.Diagnostics.Debug.Write("No asset associated with the incoming request: " + Host + Path + " ContentType: " + context.Response.ContentType);
+                                await response.Content.CopyToAsync(context.Response.Body);
+                            }
 
+                            
+                        }
                     }
 
                 }

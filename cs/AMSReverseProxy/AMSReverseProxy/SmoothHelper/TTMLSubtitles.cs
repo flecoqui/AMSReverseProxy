@@ -19,11 +19,35 @@ namespace AMSReverseProxy.SmoothHelper
     using System.Collections.Generic;
     using System.IO;
     using System.Xml;
+    class SubtitleTrack
+    {
+        public string Lang { get; set; }
+        public List<TTMLSubtitles> SubtitleList { get; set; }
+        public SubtitleTrack()
+        {
+            Lang = "unk";
+            SubtitleList = new List<TTMLSubtitles>();
+        }
+        public SubtitleTrack(string lang)
+        {
+            Lang = lang;
+            SubtitleList = new List<TTMLSubtitles>();
+        }
+        public bool AddTTMLSubtitles(TTMLSubtitles ttml)
+        {
+            if(SubtitleList == null)
+                SubtitleList = new List<TTMLSubtitles>();
+            if (SubtitleList == null)
+                SubtitleList.Add(ttml);
+            return true;
+        }
 
+
+    }
     /// <summary>
     /// Parses a Smooth Streaming Manifest.
     /// </summary>
-     class TTMLSubtitles    {
+    class TTMLSubtitles    {
 
 
         public List<SubtitleItem> subtitleList;

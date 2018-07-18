@@ -28,6 +28,9 @@
 
     }
 
-  }
+  },
+  "localDNSName": "localhost",
+  "remoteDNSName": "testamsmedia.streaming.mediaservices.windows.net"
+
 
 }
