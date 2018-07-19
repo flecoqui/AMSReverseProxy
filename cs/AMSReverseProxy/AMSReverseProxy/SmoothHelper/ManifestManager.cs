@@ -1480,6 +1480,17 @@ namespace AMSReverseProxy.SmoothHelper
             }
             return manifestBuffer;
         }
+        public async System.Threading.Tasks.Task<bool> LoadAndParseSmoothManifest()
+        {
+            // Azure Media Services request on manifest
+            System.Net.Http.HttpClient client = new System.Net.Http.HttpClient();
+            var response = await client.GetAsync(ManifestUri);
+            if (response != null)
+            {
+                return this.ParseSmoothManifest(await response.Content.ReadAsByteArrayAsync());
+            }
+            return false;
+        }
         /// <summary>
         /// ParseManifest
         /// Parse the manifest  
@@ -1536,8 +1547,8 @@ namespace AMSReverseProxy.SmoothHelper
             return mc;
         }
         /// <summary>
-        /// CreateManifestCache
-        /// Create a manifest cache.
+        /// CreateManifestManager
+        /// Create a manifest Manager.
         /// 
         /// </summary>
         /// <param name="manifestUri">manifest Uri</param>
@@ -1550,7 +1561,7 @@ namespace AMSReverseProxy.SmoothHelper
         ///                             1 Default: The cache will download the audio and video chunks step by step in one single thread
         ///                             N The cache will create N parallel threads to download the audio chunks and N parallel threads to downlaod video chunks </param>
         /// <returns>return a ManifestCache (null if not successfull)</returns>
-        public static ManifestManager CreateManifestCache(Uri manifestUri, bool downloadToGo, ulong maxMemoryBufferSize, uint maxError, int downloadMethod = 1)
+        public static ManifestManager CreateManifestManager(Uri manifestUri, bool downloadToGo, ulong maxMemoryBufferSize, uint maxError, int downloadMethod = 1)
         {
             // load the stream associated with the HLS, SMOOTH or DASH manifest
             ManifestManager mc = new ManifestManager(manifestUri,  maxMemoryBufferSize, maxError, downloadMethod);

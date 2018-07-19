@@ -29,7 +29,7 @@
     }
 
   },
-  "localDNSName": "localhost",
+  "localDNSName": "localhost:8080",
   "remoteDNSName": "testamsmedia.streaming.mediaservices.windows.net"
 
 
