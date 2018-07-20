@@ -40,6 +40,15 @@ namespace AMSReverseProxy
             }
             return false;
         }
+        bool IsSmoothStreamingManifestUri(string url)
+        {
+            if (!string.IsNullOrEmpty(url))
+            {
+                if (url.EndsWith("/manifest", StringComparison.CurrentCultureIgnoreCase))
+                    return true;
+            }
+            return false;
+        }
         bool IsHLSManifestContentType(string contentType)
         {
             if (!string.IsNullOrEmpty(contentType))
@@ -65,6 +74,17 @@ namespace AMSReverseProxy
             }
             return false;
         }
+        bool IsHLSManifestUri(string url)
+        {
+            if (!string.IsNullOrEmpty(url))
+            {
+                if (url.EndsWith("/manifest(format=m3u8-aapl)", StringComparison.CurrentCultureIgnoreCase))
+                    return true;
+                if (url.EndsWith("manifest(format=m3u8-aapl-v3)", StringComparison.CurrentCultureIgnoreCase))
+                    return true;
+            }
+            return false;
+        }
         bool IsHLSSubManifest(string url, string contentType)
         {
             if (!string.IsNullOrEmpty(url))
@@ -79,7 +99,18 @@ namespace AMSReverseProxy
             }
             return false;
         }
-        bool IsHLSVideoManifest(string url)
+        bool IsHLSSubManifestUri(string url)
+        {
+            if (!string.IsNullOrEmpty(url))
+            {
+                if (url.Contains(")/Manifest(") &&
+                        url.Contains(".ism/QualityLevels(") &&
+                        url.Contains(",format=m3u8-aapl"))
+                    return true;
+            }
+            return false;
+        }
+        bool IsHLSVideoManifestUri(string url)
         {
             if (!string.IsNullOrEmpty(url))
             {
@@ -90,7 +121,7 @@ namespace AMSReverseProxy
             }
             return false;
         }
-        bool IsHLSSubtitleManifest(string url)
+        bool IsHLSSubtitleManifestUri(string url)
         {
             if (!string.IsNullOrEmpty(url))
             {
@@ -102,7 +133,7 @@ namespace AMSReverseProxy
             return false;
         }
 
-        bool IsHLSSubtitle(string url)
+        bool IsHLSSubtitleUri(string url)
         {
             if (!string.IsNullOrEmpty(url))
             {
@@ -163,6 +194,15 @@ namespace AMSReverseProxy
                     if (url.EndsWith("/manifest(format=mpd-time-csf)", StringComparison.CurrentCultureIgnoreCase))
                         return true;
                 }
+            }
+            return false;
+        }
+        bool IsDASHManifestUri(string url)
+        {
+            if (!string.IsNullOrEmpty(url))
+            {
+                if (url.EndsWith("/manifest(format=mpd-time-csf)", StringComparison.CurrentCultureIgnoreCase))
+                    return true;
             }
             return false;
         }
@@ -405,7 +445,7 @@ namespace AMSReverseProxy
         static int sequenceDuration;
         static ulong sequenceStartTick;
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void ConfigureOld(IApplicationBuilder app, IHostingEnvironment env)
         {
             if (env.IsDevelopment())
             {
@@ -457,7 +497,7 @@ namespace AMSReverseProxy
                    // if (rootUri != null)
                     {
                         System.Diagnostics.Debug.WriteLine("Request uri: " + Host + Path);
-                        if (IsHLSSubtitleManifest(Host + Path))
+                        if (IsHLSSubtitleManifestUri(Host + Path))
                         {
                             ulong startTick = sequenceStartTick ;
                             DateTime d = new DateTime (1970,1,1) + new TimeSpan((long)sequenceStartTick);
@@ -484,7 +524,7 @@ namespace AMSReverseProxy
                             await content.CopyToAsync(context.Response.Body);
 
                         }
-                        else if (IsHLSSubtitle(Host + Path))
+                        else if (IsHLSSubtitleUri(Host + Path))
                         {
                             ulong time = GetHLSTimeFromUrl(Host + Path)/10000;
                             string hlsSubTitleMask = "WEBVTT\nX-TIMESTAMP-MAP=MPEGTS:0,LOCAL:00:00:00.000\n\n{0} --> {1}\n je peux pas\n\n{2} --> {3}\npas impossible,\n\n";
@@ -628,7 +668,7 @@ namespace AMSReverseProxy
                                 }
                                 else if (IsHLSSubManifest(Host + Path, context.Response.ContentType))
                                 {
-                                    if(IsHLSVideoManifest(Host + Path))
+                                    if(IsHLSVideoManifestUri(Host + Path))
                                     {
                                         string videoPlayList = await response.Content.ReadAsStringAsync();
                                         if(!string.IsNullOrEmpty(videoPlayList))
@@ -663,6 +703,185 @@ namespace AMSReverseProxy
                         }
                     }
 
+                }
+            });
+        }
+
+        async System.Threading.Tasks.Task<bool> GetRemoteContent(HttpContext context, Uri remoteUri, bool bWithRedirect)
+        {
+            bool result = false;
+            // Azure Media Services request on manifest
+            try
+            {
+                System.Net.Http.HttpClient client = new System.Net.Http.HttpClient();
+                var response = await client.GetAsync(remoteUri);
+                if (response != null)
+                {
+                    context.Response.ContentType = response.Content.Headers.ContentType.MediaType;
+                    context.Response.ContentLength = response.Content.Headers.ContentLength.Value;
+                    if (bWithRedirect)
+                        context.Response.Redirect(remoteUri.ToString());
+                    await response.Content.CopyToAsync(context.Response.Body);
+                    result = true;
+                }
+            }
+            catch(Exception)
+            {
+
+            }
+            return result;
+        }
+        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        {
+            if (env.IsDevelopment())
+            {
+                app.UseDeveloperExceptionPage();
+            }
+            string localDNSName = Program.Configuration["localDNSName"];
+            string remoteDNSName = Program.Configuration["remoteDNSName"];
+            Dictionary<Uri, SmoothHelper.SmoothAsset> subTitleAssets = new Dictionary<Uri, SmoothHelper.SmoothAsset>();
+            app.Run(async (context) =>
+            {
+
+                string Path = context.Request.Path;
+
+                if (string.IsNullOrEmpty(Path))
+                {
+                    await context.Response.WriteAsync("AMS Reverse Proxy Information");
+                }
+                else
+                {
+                    //string Host = "http://localhost/";
+                    string Host = string.Empty;
+
+                    if (context.Request.IsHttps)
+                        Host = "https://" + remoteDNSName + "/";
+                    else
+                        Host = "http://" + remoteDNSName + "/";
+
+                    Uri requestUri = null;
+                    Uri rootUri = null;
+                    string ErrorMessage = string.Empty;
+                    string rootPath = null;
+                    try
+                    {
+                        requestUri = new Uri(Host + Path);
+                    }
+                    catch (Exception)
+                    {
+                        requestUri = null;
+                        ErrorMessage = "Exception while creating new Uri - " + Host + Path;                   
+                    }
+                    if (requestUri != null)
+                    {
+                        rootUri = GetAMSRootUri(requestUri);
+                        rootPath = GetAMSRootPath(Path);
+                        
+                        System.Diagnostics.Debug.WriteLine("Request uri: " + Host + Path);
+                        if( (IsSmoothStreamingManifestUri(Host + Path))||
+                            (IsDASHManifestUri(Host + Path)))
+                        {
+                            await GetRemoteContent(context, new Uri(Host + Path), true);
+                        }
+                        else if (IsHLSManifestUri(Host + Path))
+                        {
+                            bool bResponseSent = false;
+                            if (subTitleAssets == null)
+                                subTitleAssets = new Dictionary<Uri, SmoothHelper.SmoothAsset>();
+                            if (subTitleAssets.ContainsKey(rootUri))
+                            {
+                                if (subTitleAssets[rootUri].Status == SmoothHelper.SmoothAssetStatus.SubtitlesLoaded)
+                                {
+                                    System.Net.Http.HttpClient client = new System.Net.Http.HttpClient();
+                                    var response = await client.GetAsync(new Uri(Host + Path));
+                                    if (response != null)
+                                    {
+                                        context.Response.ContentType = response.Content.Headers.ContentType.MediaType;
+                                        context.Response.ContentLength = response.Content.Headers.ContentLength.Value;
+                                        string hlsManifest = await response.Content.ReadAsStringAsync();
+                                        if (!string.IsNullOrEmpty(hlsManifest))
+                                        {
+                                            if (subTitleAssets[rootUri].SubtitleTrackList != null)
+                                            {
+                                                int Index = 0;
+                                                foreach (var val in subTitleAssets[rootUri].SubtitleTrackList)
+                                                {
+                                                    Index++;
+                                                    string lang = val.Value.Lang;
+                                                    string name = val.Value.Name;
+                                                    string groupid = "sub" + Index.ToString();
+                                                    int subtitleBitrate = val.Value.Bitrate;
+                                                    string subtitleUri = string.Format("QualityLevels({0})/Manifest({1},format=m3u8-aapl)", subtitleBitrate.ToString(), "text" + Index.ToString());
+                                                    hlsManifest = AddSubtitlesinHLSManifest(hlsManifest, groupid, lang, name, subtitleUri);
+                                                }
+                                            }
+                                            System.Net.Http.HttpContent content = new System.Net.Http.StringContent(hlsManifest);
+                                            context.Response.ContentLength = content.Headers.ContentLength;
+                                            context.Response.ContentType = response.Content.Headers.ContentType.ToString();
+                                            await content.CopyToAsync(context.Response.Body);
+                                            bResponseSent = true;
+                                        }
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                SmoothHelper.SmoothAsset asset = new SmoothHelper.SmoothAsset(rootUri.ToString());
+                                if (asset != null)
+                                {
+                                    asset.StartLoadingSubtitles();
+                                    subTitleAssets.Add(rootUri, asset);
+                                }
+                            }
+                            if(bResponseSent == false)
+                            {
+                                await GetRemoteContent(context, new Uri(Host + Path), false);
+                            }
+                        }
+                        else if (IsHLSSubtitleManifestUri(Host + Path))
+                        {
+                            ulong startTick = sequenceStartTick;
+                            DateTime d = new DateTime(1970, 1, 1) + new TimeSpan((long)sequenceStartTick);
+                            string hlsSubtitleManifestPrefix = string.Format("#EXTM3U\r\n#EXT-X-VERSION:4\r\n#EXT-X-ALLOW-CACHE:NO\r\n#EXT-X-MEDIA-SEQUENCE:{0}\r\n#EXT-X-TARGETDURATION:{1}\r\n#EXT-X-PROGRAM-DATE-TIME:{2}\r\n",
+                                numberOfSequences.ToString(),
+                                sequenceDuration.ToString(),
+                                d.ToString("yyyy-MM-ddTHH:mm:ssZ"));
+                            string hlsSubtitleSequencePrefix = string.Format("#EXTINF:{0}.000000,no-desc\r\n", sequenceDuration.ToString());
+                            string hlsSubtitleSequenceMask = "Fragments(text1={0},format=m3u8-aapl)\r\n";
+
+
+
+                            System.Text.StringBuilder sb = new System.Text.StringBuilder();
+                            sb.Append(hlsSubtitleManifestPrefix);
+                            for (int i = 0; i < numberOfItems; i++)
+                            {
+                                sb.Append(hlsSubtitleSequencePrefix);
+                                sb.Append(string.Format(hlsSubtitleSequenceMask, startTick.ToString()));
+                                startTick += ((ulong)sequenceDuration * 10000000);
+                            }
+                            System.Net.Http.HttpContent content = new System.Net.Http.StringContent(sb.ToString());
+                            context.Response.ContentLength = content.Headers.ContentLength;
+                            context.Response.ContentType = "application/vnd.apple.mpegurl";
+                            await content.CopyToAsync(context.Response.Body);
+
+                        }
+                        else if (IsHLSSubtitleUri(Host + Path))
+                        {
+                            ulong time = GetHLSTimeFromUrl(Host + Path) / 10000;
+                            string hlsSubTitleMask = "WEBVTT\nX-TIMESTAMP-MAP=MPEGTS:0,LOCAL:00:00:00.000\n\n{0} --> {1}\n je peux pas\n\n{2} --> {3}\npas impossible,\n\n";
+                            System.Net.Http.HttpContent content = new System.Net.Http.StringContent(string.Format(hlsSubTitleMask, /*(time*90).ToString()*/ TimeToString(time + 1504), TimeToString(time + 2504), TimeToString(time + 3504), TimeToString(time + 5504)));
+                            context.Response.ContentLength = content.Headers.ContentLength;
+                            context.Response.ContentType = "binary/octet-stream";
+                            await content.CopyToAsync(context.Response.Body);
+                        }
+                        else
+                        {
+                            await GetRemoteContent(context, new Uri(Host + Path), false);
+                        }                        
+                    }
+                    else
+                        await context.Response.WriteAsync("AMS Reverse Proxy Error: " + ErrorMessage);
                 }
             });
         }

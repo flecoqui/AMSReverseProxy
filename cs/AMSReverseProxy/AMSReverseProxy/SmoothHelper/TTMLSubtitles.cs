@@ -32,12 +32,13 @@ namespace AMSReverseProxy.SmoothHelper
     {
         public string Name { get; set; }
         public string Lang { get; set; }
-
+        public int Bitrate { get; set; }
         public List<SubtitleItem> Subtitles { get; set; }
-        public SmoothSubtitleTrack(string name, string lang)
+        public SmoothSubtitleTrack(string name, string lang, int bitrate)
         {
             Name = name;
             Lang = lang;
+            Bitrate = bitrate;
             Subtitles = new List<SubtitleItem>();
         }
     }
@@ -143,12 +144,12 @@ namespace AMSReverseProxy.SmoothHelper
         /// Parse TTML Subtitles 
         /// </summary>
         /// <param name="manifestBuffer">The buffer of the manifest being parsed.</param>
-        public bool ParseAndAddTTMLSubtitles(ulong timeOffset, string name, string lang, byte[] subtitleBuffer)
+        public bool ParseAndAddTTMLSubtitles(ulong timeOffset, string name, string lang, int bitrate, byte[] subtitleBuffer)
         {
             bool bResult = false;
             using (var subtitleStream = new MemoryStream(subtitleBuffer))
             {
-                bResult = this.ParseTTMLSubtitles(timeOffset, name, lang, subtitleStream);
+                bResult = this.ParseTTMLSubtitles(timeOffset, name, lang, bitrate, subtitleStream);
             }
             return bResult;
         }
@@ -156,7 +157,7 @@ namespace AMSReverseProxy.SmoothHelper
         /// Parses the TTML stream.
         /// </summary>
         /// <param name="subtitleStream">The manifest stream being parsed.</param>
-        public bool ParseTTMLSubtitles(ulong timeOffset, string name, string lang, Stream subtitleStream)
+        public bool ParseTTMLSubtitles(ulong timeOffset, string name, string lang, int bitrate, Stream subtitleStream)
         {
             bool bResult = false;
             try
@@ -229,7 +230,7 @@ namespace AMSReverseProxy.SmoothHelper
                                                     {
                                                         string key = name + lang;
                                                         if (!SubtitleTrackList.ContainsKey(key))
-                                                            SubtitleTrackList.Add(key, new SmoothSubtitleTrack(name, lang));
+                                                            SubtitleTrackList.Add(key, new SmoothSubtitleTrack(name, lang, bitrate));
                                                         if (SubtitleTrackList[key].Subtitles == null)
                                                             SubtitleTrackList[key].Subtitles = new List<SubtitleItem>();
                                                         SubtitleTrackList[key].Subtitles.Add(item);
@@ -306,7 +307,16 @@ namespace AMSReverseProxy.SmoothHelper
             }
             return result;
         }
-        public bool LoadSubtitles()
+        public bool StopLoadingSubtitles()
+        {
+            bool result = false;
+            if(SubtitleTask!=null)
+            {
+
+            }
+            return result;
+        }
+        public bool StartLoadingSubtitles()
         {
             bool result = false;
             SubtitleTask = System.Threading.Tasks.Task.Factory.StartNew(async ()
@@ -357,7 +367,7 @@ namespace AMSReverseProxy.SmoothHelper
                                                 {
                                                     string subtitleTrackName = (!string.IsNullOrEmpty(cl.Configuration.TrackName) ? cl.Configuration.TrackName : "sub" + Index.ToString());
                                                     string subtitleTrackLang = (!string.IsNullOrEmpty(cl.Configuration.Language)? cl.Configuration.Language : "unk");
-                                                    ParseAndAddTTMLSubtitles((ulong)time, subtitleTrackName, subtitleTrackLang, subtitleBuffer);
+                                                    ParseAndAddTTMLSubtitles((ulong)time, subtitleTrackName, subtitleTrackLang, cl.Configuration.Bitrate,subtitleBuffer);
                                                 }
 
                                             }
