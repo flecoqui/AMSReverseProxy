@@ -25,15 +25,23 @@ namespace AMSReverseProxy
                  var environment = webHostBuilderContext.HostingEnvironment;
                  bool isWindows = System.Runtime.InteropServices.RuntimeInformation
                                                .IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows);
-                 if(isWindows)
+
+                 
+                 if (isWindows)
                  configurationbuilder
-                         .AddJsonFile("win.appsettings.Development.json", optional: true);
+                         .AddJsonFile($"win.appsettings.{webHostBuilderContext.HostingEnvironment.EnvironmentName}.json", optional: true, reloadOnChange: true);
                  else
                  configurationbuilder
-                         .AddJsonFile("linux.appsettings.Development.json", optional: true);
+                         .AddJsonFile($"linux.appsettings.{webHostBuilderContext.HostingEnvironment.EnvironmentName}.json", optional: true, reloadOnChange: true);
                  configurationbuilder.AddEnvironmentVariables();
 
                  Configuration = configurationbuilder.Build();
+             })
+            .ConfigureLogging((hostingContext, logging) =>
+             {
+                 logging.AddConfiguration(hostingContext.Configuration.GetSection("Logging"));
+                 //logging.AddConsole();
+                 //logging.AddDebug();
              })
                 .UseStartup<Startup>()
             .UseKestrel(options => options.ConfigureEndpoints())

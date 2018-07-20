@@ -32,7 +32,16 @@
 
   },
   "localDNSName": "localhost:8080",
-  "remoteDNSName": "testamsmedia.streaming.mediaservices.windows.net"
-
+  "remoteDNSName": "testamsmedia.streaming.mediaservices.windows.net",
+  "Logging": {
+    "LogLevel": {
+      "Default": "Debug",
+      "System": "Information",
+      "Microsoft": "Information"
+    },
+    "Console": {
+      "IncludeScopes": "true"
+    }
+  }
 
 }
