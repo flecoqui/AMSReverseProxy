@@ -1,7 +1,18 @@
-﻿using Microsoft.AspNetCore.Hosting;
+﻿//*********************************************************
+//
+// Copyright (c) Microsoft. All rights reserved.
+// This code is licensed under the MIT License (MIT).
+// THIS CODE IS PROVIDED *AS IS* WITHOUT WARRANTY OF
+// ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING ANY
+// IMPLIED WARRANTIES OF FITNESS FOR A PARTICULAR
+// PURPOSE, MERCHANTABILITY, OR NON-INFRINGEMENT.
+//
+//*********************************************************
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -128,22 +139,21 @@ namespace AMSReverseProxy
                     store.Open(OpenFlags.ReadOnly);
 
                     var certificate = store.Certificates.Find(
-
                         X509FindType.FindBySubjectName,
-
                         config.Host,
-
-                        validOnly: !environment.IsDevelopment());
+                        validOnly: false);
+                    // To uncomment in production
+                    //    validOnly: !environment.IsDevelopment());
 
 
 
                     if (certificate.Count == 0)
-
                     {
-
+                        Program.Logger?.LogError("AMS Reverse Proxy Service: Certificate used for https not found");
                         throw new InvalidOperationException($"Certificate not found for {config.Host}.");
-
                     }
+                    else
+                        Program.Logger?.LogInformation("AMS Reverse Proxy Service: Certificate used for https found");
 
 
 

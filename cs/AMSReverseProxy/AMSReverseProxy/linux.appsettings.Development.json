@@ -51,6 +51,12 @@
     "Console": {
       "IncludeScopes": "true"
     }
+  },
+  "FileLoggerOptions": {
+    "FileSizeLimit": "10000000",
+    "RetainedFileCountLimit": "10",
+    "FileName": "ams-logs-",
+    "LogDirectory": "AMSLogs"
   }
 
 }

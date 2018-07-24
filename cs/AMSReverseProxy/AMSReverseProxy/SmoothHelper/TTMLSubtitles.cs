@@ -16,6 +16,7 @@ using System.Threading.Tasks;
 
 namespace AMSReverseProxy.SmoothHelper
 {
+    using Microsoft.Extensions.Logging;
     using System.Collections.Generic;
     using System.IO;
     using System.Xml;
@@ -347,6 +348,8 @@ namespace AMSReverseProxy.SmoothHelper
             {
                 try
                 {
+                    Program.Logger.LogInformation("AMS Reverse Proxy Service: starting to capture and convert TTML subtitles from " + RootUri);
+
                     downloadManifestTaskRunning = true;
                     SmoothManifestManager = SmoothHelper.ManifestManager.CreateManifestManager(new Uri(RootUri), false, 5000000, 20);
                     if (SmoothManifestManager != null)
@@ -443,6 +446,7 @@ namespace AMSReverseProxy.SmoothHelper
 
                                 if ((SmoothManifestManager.IsLive))
                                 {
+                                    Program.Logger.LogInformation("AMS Reverse Proxy Service: Updating the live TTML subtitles for " + RootUri);
                                     double delta = (DateTime.Now - LatestManifestDownloadTime).TotalMilliseconds;
                                     if (delta< ManifestUpdatePeriod)
                                         System.Threading.Tasks.Task.Delay(ManifestUpdatePeriod - (int)delta).Wait();
@@ -452,7 +456,10 @@ namespace AMSReverseProxy.SmoothHelper
                                     LatestManifestDownloadTime = DateTime.Now;
                                 }
                                 else
+                                {
+                                    Program.Logger.LogInformation("AMS Reverse Proxy Service: Capture and conversion of TTML subtitles done for " + RootUri);
                                     this.downloadManifestTaskRunning = false;
+                                }
 
                             }
                         }

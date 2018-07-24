@@ -1,0 +1,41 @@
+C:\projects\VideoApp\mss_test
+
+http://localhost/VideoApp/mss_test/asset.ism/manifest
+
+http://localhost/VideoApp/Live/_live1.isml/manifest
+ASTool.exe --pull --input http://amssamples.streaming.mediaservices.windows.net/91492735-c523-432b-ba01-faba6c2206a2/AzureMediaServicesPromo.ism/Manifest --ouput c:\astool\dvr1 --maxduration 60000 
+ASTool.exe --pull --input http://cdn.iptv.lu/live/disk/artedehd/mss_test/Manifest  --output c:\astool\dvr\arte --maxduration 60000 
+
+http://vmastool.eastus.cloudapp.azure.com/VideoApp/metisser/metisser.ism/manifest
+
+http://vmastool.eastus.cloudapp.azure.com/VideoApp/mss_test/asset.ism/manifest
+http://vmastool.eastus.cloudapp.azure.com/VideoApp/Live/_live1.isml/manifest
+testamsmedia.streaming.mediaservices.windows.net
+
+ASTool.exe --push --input C:\astool\VideoApp\mss_test\asset.ism --output http://localhost/VideoApp/Live/_live1.isml --loop 0
+ASTool.exe --push --input C:\astool\VideoApp\metisser\metisser.ism  --output http://testsmoothlive-testamsmedia.channel.mediaservices.windows.net/ingest.isml --loop 0
+
+http://testsmoothlive-testamsmedia.channel.mediaservices.windows.net/preview.isml/manifest
+https://testamsmedia.streaming.mediaservices.windows.net/6cddd98f-8aca-4a94-9a0d-6f66026aebd8/54153f4a-8f9c-44b4-9912-f1bfc8a2fe8f.ism/manifest
+https://testamsmedia.streaming.mediaservices.windows.net/6cddd98f-8aca-4a94-9a0d-6f66026aebd8/54153f4a-8f9c-44b4-9912-f1bfc8a2fe8f.ism/manifest(format=m3u8-aapl-v3)
+https://testamsmedia.streaming.mediaservices.windows.net/6cddd98f-8aca-4a94-9a0d-6f66026aebd8/54153f4a-8f9c-44b4-9912-f1bfc8a2fe8f.ism/manifest(format=mpd-time-csf)
+
+http://testsmoothlive-testamsmedia.channel.mediaservices.windows.net/preview.isml/manifest
+ASTool.exe --push --input C:\projects\VideoApp\mss_test\asset.ism --output http://localhost/VideoApp/Live/_live1.isml --loop 0
+
+ASTool.exe --push --input C:\projects\VideoApp\metisser\metisser.ism --output http://localhost/VideoApp/Live/_live1.isml --loop 0
+
+pushencoder http://localhost/VideoApp/Live/_live1.isml C:\projects\VideoApp\metisser\metisser.ism /loop
+
+pushencoder http://172.17.44.17/VideoApp/Live/_live1.isml C:\projects\VideoApp\metisser\metisser.ism /loop
+pushencoder /loop http://172.17.44.17/VideoApp/Live/_live1.isml C:\temp\content\MOVIE_Ondine\165258.ism 
+
+http://localhost/VideoApp/Live/_live1.isml/manifest
+http://localhost/VideoApp/Live/_live1.isml/manifest
+http://localhost/VideoApp/mss_test/asset.ism/manifest
+http://localhost/VideoApp/metisser/metisser.ism/manifest
+http://localhost/VideoApp/Live/_live1.isml/manifest
+http://192.168.1.76/VideoApp/Live/_live1.isml/manifest
+http://192.168.1.76/VideoApp/mss_test/asset.ism/manifest
+http://192.168.1.76/VideoApp/metisser/metisser.ism/manifest
+192.168.1.76

@@ -1,0 +1,62 @@
+﻿{
+
+  "HttpServer": {
+
+    "Endpoints": {
+
+      "Http": {
+
+        "Host": "localhost",
+
+        "Port": 8080,
+
+        "Scheme": "http"
+
+      },
+
+      "Https": {
+
+        "Host": "localhost",
+
+        "Port": 44340,
+
+        "Scheme": "https",
+
+        "FilePath": "/path/to/certificate"
+
+      }
+
+    }
+
+  },
+  "localDNSName": "localhost:8080",
+  "remoteDNSName": "testamsmedia.streaming.mediaservices.windows.net",
+  "liveSubtitleDepthInSeconds": "60",
+  "liveSubtitleRefreshPeriodMs": "6000",
+  "subtitleUrlCount": "2",
+  "subtitleUrlList": [
+    {
+      "url": "http://testamsmedia.streaming.mediaservices.windows.net/18003c32-3453-47ef-9547-2255188a2242/asset.ism/manifest"
+    },
+    {
+      "url": "http://testamsmedia.streaming.mediaservices.windows.net/7c2c4406-105a-418f-b4b4-4a98a6d65532/6193b18a-4410-4f08-b0cc-b1d59545223f.ism/manifest"
+    }
+  ],
+  "Logging": {
+    "LogLevel": {
+      "Default": "Debug",
+      "System": "Information",
+      "Microsoft": "Information"
+    },
+    "Console": {
+      "IncludeScopes": "true"
+    }
+  },
+  "FileLoggerOptions": {
+    "FileSizeLimit": "10000000",
+    "RetainedFileCountLimit": "10",
+    "FileName": "ams-logs-",
+    "LogDirectory": "AMSLogs"
+  }
+
+}
