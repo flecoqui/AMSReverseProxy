@@ -893,7 +893,7 @@ namespace AMSReverseProxy.SmoothHelper
         /// </summary>
         /// <param name=""></param>
         /// <returns>true if successful</returns>
-        private async Task<bool> ParseAndUpdateSmoothManifest()
+        public async Task<bool> ParseAndUpdateSmoothManifest()
         {
             bool bResult = false;
             var manifestBuffer = await this.DownloadManifestAsync(true);

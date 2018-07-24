@@ -33,12 +33,14 @@ namespace AMSReverseProxy.SmoothHelper
         public string Name { get; set; }
         public string Lang { get; set; }
         public int Bitrate { get; set; }
+        public int PeriodMs { get; set; }
         public List<SubtitleItem> Subtitles { get; set; }
-        public SmoothSubtitleTrack(string name, string lang, int bitrate)
+        public SmoothSubtitleTrack(string name, string lang, int bitrate, int period)
         {
             Name = name;
             Lang = lang;
             Bitrate = bitrate;
+            PeriodMs = period;
             Subtitles = new List<SubtitleItem>();
         }
     }
@@ -48,11 +50,22 @@ namespace AMSReverseProxy.SmoothHelper
         public string RootUri { get; set; }
 
         public Dictionary<string, SmoothSubtitleTrack> SubtitleTrackList { get; set; }
+        public bool IsLive()
+        {
+            if (SmoothManifestManager != null)
+                return SmoothManifestManager.IsLive;
+            return false;
+        }
         SmoothHelper.ManifestManager SmoothManifestManager;
         System.Threading.Tasks.Task SubtitleTask = null;
-        public SmoothAsset(string root)
+        public ulong SubtitleLiveOffset { get; set; }
+        public int ManifestUpdatePeriod { get; set; }
+        bool downloadManifestTaskRunning = false;
+        public SmoothAsset(string root, ulong offset = 0, int period = 0)
         {
             RootUri = root;
+            SubtitleLiveOffset = offset;
+            ManifestUpdatePeriod = period;
             Status = SmoothAssetStatus.Init;
             SubtitleTrackList = new Dictionary<string, SmoothSubtitleTrack>();
         }
@@ -73,7 +86,7 @@ namespace AMSReverseProxy.SmoothHelper
         private const string TTMLSubtitlesBody = "body";
 
         /// <summary>
-        /// Defines the TTMLSubtitles div.
+        /// Defines the TTMLSubtitles div
         /// </summary>
         private const string TTMLSubtitlesDiv = "div";
 
@@ -144,12 +157,12 @@ namespace AMSReverseProxy.SmoothHelper
         /// Parse TTML Subtitles 
         /// </summary>
         /// <param name="manifestBuffer">The buffer of the manifest being parsed.</param>
-        public bool ParseAndAddTTMLSubtitles(ulong timeOffset, string name, string lang, int bitrate, byte[] subtitleBuffer)
+        public bool ParseAndAddTTMLSubtitles(ulong timeOffset, string name, string lang, int bitrate, int period,  byte[] subtitleBuffer)
         {
             bool bResult = false;
             using (var subtitleStream = new MemoryStream(subtitleBuffer))
             {
-                bResult = this.ParseTTMLSubtitles(timeOffset, name, lang, bitrate, subtitleStream);
+                bResult = this.ParseTTMLSubtitles(timeOffset, name, lang, bitrate, period,  subtitleStream);
             }
             return bResult;
         }
@@ -157,7 +170,7 @@ namespace AMSReverseProxy.SmoothHelper
         /// Parses the TTML stream.
         /// </summary>
         /// <param name="subtitleStream">The manifest stream being parsed.</param>
-        public bool ParseTTMLSubtitles(ulong timeOffset, string name, string lang, int bitrate, Stream subtitleStream)
+        public bool ParseTTMLSubtitles(ulong timeOffset, string name, string lang, int bitrate, int period, Stream subtitleStream)
         {
             bool bResult = false;
             try
@@ -215,11 +228,10 @@ namespace AMSReverseProxy.SmoothHelper
                                                 )
                                             {
 
-                                                System.Diagnostics.Debug.WriteLine("Subtitle: " + Id + " Content: \r\n" + Text);
                                                 ulong BeginTime = SubtitleItem.ParseTime(Begin);
                                                 ulong EndTime = SubtitleItem.ParseTime(End);
 
-                                                SubtitleItem item = new SubtitleItem((ulong)timeOffset + BeginTime, (ulong)timeOffset + EndTime, Text);
+                                                SubtitleItem item = new SubtitleItem((ulong)timeOffset*1000 + BeginTime, (ulong)timeOffset*1000 + EndTime, Text);
                                                 if (item != null)
                                                 {
                                                     if(SubtitleTrackList == null)
@@ -230,10 +242,12 @@ namespace AMSReverseProxy.SmoothHelper
                                                     {
                                                         string key = name + lang;
                                                         if (!SubtitleTrackList.ContainsKey(key))
-                                                            SubtitleTrackList.Add(key, new SmoothSubtitleTrack(name, lang, bitrate));
+                                                            SubtitleTrackList.Add(key, new SmoothSubtitleTrack(name, lang, bitrate, period));
                                                         if (SubtitleTrackList[key].Subtitles == null)
                                                             SubtitleTrackList[key].Subtitles = new List<SubtitleItem>();
                                                         SubtitleTrackList[key].Subtitles.Add(item);
+                                                        System.Diagnostics.Debug.WriteLine("Subtitle: " + SubtitleItem.TimeToString(item.startTime) + " - " + SubtitleItem.TimeToString(item.endTime) + " Content: \r\n" + Text);
+
                                                     }
                                                 }
                                             }
@@ -310,88 +324,145 @@ namespace AMSReverseProxy.SmoothHelper
         public bool StopLoadingSubtitles()
         {
             bool result = false;
-            if(SubtitleTask!=null)
+            downloadManifestTaskRunning = false;
+            System.Threading.Tasks.Task.Delay(1000).Wait();
+            if (SubtitleTask!=null)
             {
-
+                int Index = 0;
+                while ((!SubtitleTask.IsCompleted)&&(Index++<5))
+                {
+                    System.Threading.Tasks.Task.Delay(1000).Wait();
+                }
+                SubtitleTask = null;
             }
             return result;
         }
-        public bool StartLoadingSubtitles()
+        public bool StartLoadingSubtitles(ulong offset = 0, int period = 0)
         {
             bool result = false;
+            SubtitleLiveOffset = offset;
+            ManifestUpdatePeriod = period;
             SubtitleTask = System.Threading.Tasks.Task.Factory.StartNew(async ()
                 =>
             {
-                SmoothManifestManager = SmoothHelper.ManifestManager.CreateManifestManager(new Uri(RootUri), false, 5000000, 20);
-                if (SmoothManifestManager != null)
+                try
                 {
-
-                    bool res = await SmoothManifestManager.LoadAndParseSmoothManifest();
-                    if (res == true)
+                    downloadManifestTaskRunning = true;
+                    SmoothManifestManager = SmoothHelper.ManifestManager.CreateManifestManager(new Uri(RootUri), false, 5000000, 20);
+                    if (SmoothManifestManager != null)
                     {
-                        Status = SmoothAssetStatus.ManifestLoaded;
-                        System.Diagnostics.Debug.Write("SmoothStreaming Manifest: " + RootUri + " correctly downloaded and parsed ");
 
-                        // Download Text Chunks
-                        if ((SmoothManifestManager.TextChunkListList != null) && (SmoothManifestManager.TextChunkListList.Count > 0))
+                        bool res = await SmoothManifestManager.LoadAndParseSmoothManifest();
+                        if (res == true)
                         {
-                            Status = SmoothAssetStatus.SubtitlesAvailable;
-                            // Something to download
-                            if (!SmoothManifestManager.IsDownloadCompleted(SmoothManifestManager.TextChunkListList))
+                            DateTime LatestManifestDownloadTime = DateTime.Now;
+                            Status = SmoothAssetStatus.ManifestLoaded;
+                            System.Diagnostics.Debug.Write("SmoothStreaming Manifest: " + RootUri + " correctly downloaded and parsed ");
+
+                            // If Live update the list of chunks to downlad
+                            while (this.downloadManifestTaskRunning)
                             {
-                                System.Diagnostics.Debug.WriteLine(string.Format("{0:d/M/yyyy HH:mm:ss.fff}", DateTime.Now) + " downloadThread downloading text chunks for Manifest Uri: " + SmoothManifestManager.ManifestUri.ToString());
-                                int Index = 0;
-                                foreach (var cl in SmoothManifestManager.TextChunkListList)
+
+                                // Download Text Chunks
+                                if ((SmoothManifestManager.TextChunkListList != null) && (SmoothManifestManager.TextChunkListList.Count > 0))
                                 {
-                                    Index++;
-                                    SmoothHelper.ChunkBuffer cb;
-                                    while (cl.ChunksToReadQueue.TryDequeue(out cb))
+                                    if(Status < SmoothAssetStatus.SubtitlesAvailable)
+                                        Status = SmoothAssetStatus.SubtitlesAvailable;
+                                    // Something to download
+                                    if (!SmoothManifestManager.IsDownloadCompleted(SmoothManifestManager.TextChunkListList))
                                     {
-                                        string url = (string.IsNullOrEmpty(SmoothManifestManager.RedirectBaseUrl) ? SmoothManifestManager.BaseUrl : SmoothManifestManager.RedirectBaseUrl) + "/" + cl.TemplateUrl.Replace("{start_time}", cb.Time.ToString());
-                                        System.Diagnostics.Debug.WriteLine(string.Format("{0:d/M/yyyy HH:mm:ss.fff}", DateTime.Now) + " downloadThread downloading text chunks : " + url.ToString());
-                                        cb.chunkBuffer = await SmoothManifestManager.DownloadChunkAsync(new Uri(url));
 
-                                        if (cb.IsChunkDownloaded())
+                                        System.Diagnostics.Debug.WriteLine(string.Format("{0:d/M/yyyy HH:mm:ss.fff}", DateTime.Now) + " downloadThread downloading text chunks for Manifest Uri: " + SmoothManifestManager.ManifestUri.ToString());
+                                        int Index = 0;
+                                        foreach (var cl in SmoothManifestManager.TextChunkListList)
                                         {
-                                            ulong l = cb.GetLength();
-                                            if(l>0)
+                                            ulong CaptureSubtitleStartTime = 0;
+                                            if ((SubtitleLiveOffset > 0) && (SmoothManifestManager.IsLive))
                                             {
-                                                double time = SmoothManifestManager.TimescaleToHNS(cb.Time) / (SmoothHelper.ManifestManager.TimeUnit);
-                                                string text = GetTTMLTextFromMP4Boxes(cb.chunkBuffer);
-                                                if(!string.IsNullOrEmpty(text))
-                                                {
-                                                    System.Diagnostics.Debug.Write("TTML chunk at : " + time.ToString() + " seconds \r\n" + text);
-                                                }
-                                                byte[] subtitleBuffer = GetTTMLBytesFromMP4Boxes(cb.chunkBuffer);
-                                                if (subtitleBuffer != null)
-                                                {
-                                                    string subtitleTrackName = (!string.IsNullOrEmpty(cl.Configuration.TrackName) ? cl.Configuration.TrackName : "sub" + Index.ToString());
-                                                    string subtitleTrackLang = (!string.IsNullOrEmpty(cl.Configuration.Language)? cl.Configuration.Language : "unk");
-                                                    ParseAndAddTTMLSubtitles((ulong)time, subtitleTrackName, subtitleTrackLang, cl.Configuration.Bitrate,subtitleBuffer);
-                                                }
-
+                                                CaptureSubtitleStartTime = cl.LastTimeChunksToRead - (SubtitleLiveOffset * SmoothManifestManager.TimeScale) > 0 ?
+                                                                            cl.LastTimeChunksToRead - (SubtitleLiveOffset * SmoothManifestManager.TimeScale) : 0;
                                             }
+                                            Index++;
+                                            SmoothHelper.ChunkBuffer cb;
+                                            while ((cl.ChunksToReadQueue.TryDequeue(out cb)) && (downloadManifestTaskRunning == true))
+                                            {
 
-                                            cl.InputBytes += l;
-                                            cl.InputChunks++;
 
-                                            cl.ChunksQueue.Enqueue(cb);
+                                                if (cb.Time > CaptureSubtitleStartTime)
+                                                {
+                                                    string baseUri = SmoothHelper.ManifestManager.GetBaseUri(RootUri);
+                                                    string url = baseUri + "/" + cl.TemplateUrl.Replace("{start_time}", cb.Time.ToString());
+                                                    System.Diagnostics.Debug.WriteLine(string.Format("{0:d/M/yyyy HH:mm:ss.fff}", DateTime.Now) + " downloadThread downloading text chunks : " + url.ToString());
+                                                    cb.chunkBuffer = await SmoothManifestManager.DownloadChunkAsync(new Uri(url));
+
+                                                    if (cb.IsChunkDownloaded())
+                                                    {
+                                                        ulong l = cb.GetLength();
+                                                        if (l > 0)
+                                                        {
+                                                            double time = SmoothManifestManager.TimescaleToHNS(cb.Time) / (SmoothHelper.ManifestManager.TimeUnit);
+                                                            string text = GetTTMLTextFromMP4Boxes(cb.chunkBuffer);
+                                                            if (!string.IsNullOrEmpty(text))
+                                                            {
+                                                                System.Diagnostics.Debug.Write("TTML chunk at : " + time.ToString() + " seconds \r\n" + text);
+                                                            }
+                                                            byte[] subtitleBuffer = GetTTMLBytesFromMP4Boxes(cb.chunkBuffer);
+                                                            if (subtitleBuffer != null)
+                                                            {
+                                                                string subtitleTrackName = (!string.IsNullOrEmpty(cl.Configuration.TrackName) ? cl.Configuration.TrackName : "sub" + Index.ToString());
+                                                                string subtitleTrackLang = (!string.IsNullOrEmpty(cl.Configuration.Language) ? cl.Configuration.Language : "unk");
+                                                                int HLSPeriod = 6000;
+                                                                ParseAndAddTTMLSubtitles((ulong)time, subtitleTrackName, subtitleTrackLang, cl.Configuration.Bitrate, HLSPeriod, subtitleBuffer);
+                                                            }
+
+                                                        }
+
+                                                        cl.InputBytes += l;
+                                                        cl.InputChunks++;
+
+                                                        cl.ChunksQueue.Enqueue(cb);
+                                                    }
+                                                    else
+                                                        cl.InputChunks++;
+
+                                                }
+                                            }
+                                            Status = SmoothAssetStatus.SubtitlesLoaded;
+
                                         }
+
                                     }
-                                    Status = SmoothAssetStatus.SubtitlesLoaded;
+                                    else
+                                    {
+                                        if (SmoothManifestManager.IsLive)
+                                            result = true;
+                                    }
                                 }
-                                System.Diagnostics.Debug.WriteLine(string.Format("{0:d/M/yyyy HH:mm:ss.fff}", DateTime.Now) + " downloadThread downloading text chunks done for Uri: " + SmoothManifestManager.ManifestUri.ToString());
-                            }
-                            else
-                            {
-                                if (SmoothManifestManager.IsLive)
-                                    result = true;
+                                else
+                                    Status = SmoothAssetStatus.SubtitlesNotAvailable;
+
+                                if ((SmoothManifestManager.IsLive))
+                                {
+                                    double delta = (DateTime.Now - LatestManifestDownloadTime).TotalMilliseconds;
+                                    if (delta< ManifestUpdatePeriod)
+                                        System.Threading.Tasks.Task.Delay(ManifestUpdatePeriod - (int)delta).Wait();
+                                    System.Diagnostics.Debug.WriteLine(string.Format("{0:d/M/yyyy HH:mm:ss.fff}", DateTime.Now) + " Update Manifest for Uri: " + RootUri.ToString());
+                                    await SmoothManifestManager.ParseAndUpdateSmoothManifest();
+                                    System.Diagnostics.Debug.WriteLine(string.Format("{0:d/M/yyyy HH:mm:ss.fff}", DateTime.Now) + " Update Manifest done for Uri: " + RootUri.ToString());
+                                    LatestManifestDownloadTime = DateTime.Now;
+                                }
+                                else
+                                    this.downloadManifestTaskRunning = false;
+
                             }
                         }
-                        else
-                            Status = SmoothAssetStatus.SubtitlesNotAvailable;
                     }
                 }
+                catch(Exception )
+                {
+                    result = false;
+                }
+
             }
                 );
 
