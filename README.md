@@ -103,16 +103,16 @@ By default, the application use a JSON file to read the configuration.  By defau
 
 The configuration file name for Windows operating system in Production mode is: 
 
-win.appsettings.Production.json  [here](https://raw.githubusercontent.com/flecoqui/AMSReverseProxy/master/cs/AMSReverseProxy/AMSReverseProxy/win.appsettings.Production.json)
+    win.appsettings.Production.json  [here](https://raw.githubusercontent.com/flecoqui/AMSReverseProxy/master/cs/AMSReverseProxy/AMSReverseProxy/win.appsettings.Production.json)
 
 
 The configuration file name for Linux operating system in Staging mode is: 
 
-linux.appsettings.Staging.json  [here](https://raw.githubusercontent.com/flecoqui/AMSReverseProxy/master/cs/AMSReverseProxy/AMSReverseProxy/linux.appsettings.Staging.json)
+    linux.appsettings.Staging.json  [here](https://raw.githubusercontent.com/flecoqui/AMSReverseProxy/master/cs/AMSReverseProxy/AMSReverseProxy/linux.appsettings.Staging.json)
 
 
 
-| option | value type | default value | Description | 
+| parameter | value type | default value | Description | 
 | :--- | :--- | :--- |  :--- | 
 |--input| string | null | Uri of the VOD stream or Live stream|
 |--ouput| string | null | Path of the folder where the audio and video chunks will be stored|
@@ -132,54 +132,53 @@ linux.appsettings.Staging.json  [here](https://raw.githubusercontent.com/flecoqu
 
 ### Configuration File content Examples
 
-{
-  "HttpServer": {
-    "Endpoints": {
-      "Http": {
-        "Host": "localhost",
-        "Port": 8080,
-        "Scheme": "http"
-      },
-      "Https": {
-        "Host": "localhost",
-        "Port": 44340,
-        "Scheme": "https",
-        "StoreName": "My",
-        "StoreLocation": "CurrentUser"
-      }
-    }
-  },
-  "localDNSName": "localhost:8080",
-  "remoteDNSName": "testamsmedia.streaming.mediaservices.windows.net",
-  "liveSubtitleDepthInSeconds": "60",
-  "liveSubtitleRefreshPeriodMs": "6000",
-  "subtitleUrlCount": "2",
-  "subtitleUrlList": [
     {
-      "url": "http://testamsmedia.streaming.mediaservices.windows.net/18003c32-3453-47ef-9547-2255188a2242/asset.ism/manifest"
-    },
-    {
-      "url": "http://testamsmedia.streaming.mediaservices.windows.net/7c2c4406-105a-418f-b4b4-4a98a6d65532/6193b18a-4410-4f08-b0cc-b1d59545223f.ism/manifest"
+        "HttpServer": {
+            "Endpoints": {
+                "Http": {
+                    "Host": "localhost",
+                    "Port": 8080,
+                    "Scheme": "http"
+                },
+                "Https": {
+                    "Host": "localhost",
+                    "Port": 44340,
+                    "Scheme": "https",
+                    "StoreName": "My",
+                    "StoreLocation": "CurrentUser"
+                }
+            }
+        },
+        "localDNSName":     "localhost:8080",
+        "remoteDNSName":    "testamsmedia.streaming.mediaservices.windows.net",
+        "liveSubtitleDepthInSeconds": "60",
+        "liveSubtitleRefreshPeriodMs": "6000",
+        "subtitleUrlCount": "2",
+        "subtitleUrlList": [
+            {
+                "url": "http://testamsmedia.streaming.mediaservices.windows.net/18003c32-3453-47ef-9547-2255188a2242/asset.ism/manifest"
+            },
+            {
+                "url": "http://testamsmedia.streaming.mediaservices.windows.net/7c2c4406-105a-418f-b4b4-4a98a6d65532/6193b18a-4410-4f08-b0cc-b1d59545223f.ism/manifest"
+            }
+        ],
+        "Logging": {
+            "LogLevel": {
+                "Default": "Debug",
+                "System": "Information",
+                "Microsoft": "Information"
+            },
+            "Console": {
+                "IncludeScopes": "true"
+            }
+        },
+        "FileLoggerOptions": {
+        "FileSizeLimit": "10000000",
+        "RetainedFileCountLimit": "10",
+        "FileName": "ams-logs-",
+        "LogDirectory": "AMSLogs"
+        }
     }
-  ],
-  "Logging": {
-    "LogLevel": {
-      "Default": "Debug",
-      "System": "Information",
-      "Microsoft": "Information"
-    },
-    "Console": {
-      "IncludeScopes": "true"
-    }
-  },
-  "FileLoggerOptions": {
-    "FileSizeLimit": "10000000",
-    "RetainedFileCountLimit": "10",
-    "FileName": "ams-logs-",
-    "LogDirectory": "AMSLogs"
-  }
-
-}
 
 ## Examples
 
