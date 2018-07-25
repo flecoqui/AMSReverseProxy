@@ -22,14 +22,14 @@ The latest releases are available [here](https://github.com/flecoqui/AMSReverseP
 - [Windows latest release](https://github.com/flecoqui/AMSReverseProxy/raw/master/Releases/LatestRelease.win.zip) </p>
 
     [win-download]:                 https://github.com/flecoqui/AMSReverseProxy/raw/master/Releases/LatestRelease.win.zip
-    [AMSReverseProxy-version-badge]:            https://cdn.rawgit.com/flecoqui/AMSReverseProxy/master/docs/AMSReverseProxybuild.svg
+    [AMSReverseProxy-version-badge]:            https://cdn.rawgit.com/flecoqui/AMSReverseProxy/master/docs/amsreverseproxybuild.svg
     [![Github Release][AMSReverseProxy-version-badge]][win-download]
 
 
 - [Ubuntu  latest release](https://github.com/flecoqui/AMSReverseProxy/raw/master/Releases/LatestRelease.ubuntu.tar.gz)</p>
 
     [ubuntu-download]:                 https://github.com/flecoqui/AMSReverseProxy/raw/master/Releases/LatestRelease.ubuntu.tar.gz
-    [AMSReverseProxy-version-badge]:            https://cdn.rawgit.com/flecoqui/AMSReverseProxy/master/docs/AMSReverseProxybuild.svg
+    [AMSReverseProxy-version-badge]:            https://cdn.rawgit.com/flecoqui/AMSReverseProxy/master/docs/amsreverseproxybuild.svg
     [![Github Release][AMSReverseProxy-version-badge]][ubuntu-download]
 
 
@@ -37,7 +37,7 @@ The latest releases are available [here](https://github.com/flecoqui/AMSReverseP
 
 
     [debian-download]:                 https://github.com/flecoqui/AMSReverseProxy/raw/master/Releases/LatestRelease.debian.tar.gz
-    [AMSReverseProxy-version-badge]:            https://cdn.rawgit.com/flecoqui/AMSReverseProxy/master/docs/AMSReverseProxybuild.svg
+    [AMSReverseProxy-version-badge]:            https://cdn.rawgit.com/flecoqui/AMSReverseProxy/master/docs/amsreverseproxybuild.svg
     [![Github Release][AMSReverseProxy-version-badge]][debian-download]
 
 
@@ -46,7 +46,7 @@ The latest releases are available [here](https://github.com/flecoqui/AMSReverseP
 
 
     [centos-download]:                 https://github.com/flecoqui/AMSReverseProxy/raw/master/Releases/LatestRelease.centos.tar.gz
-    [AMSReverseProxy-version-badge]:            https://cdn.rawgit.com/flecoqui/AMSReverseProxy/master/docs/AMSReverseProxybuild.svg
+    [AMSReverseProxy-version-badge]:            https://cdn.rawgit.com/flecoqui/AMSReverseProxy/master/docs/amsreverseproxybuild.svg
     [![Github Release][AMSReverseProxy-version-badge]][centos-download]
 
 
@@ -54,7 +54,7 @@ The latest releases are available [here](https://github.com/flecoqui/AMSReverseP
 
 
     [rhel-download]:                 https://github.com/flecoqui/AMSReverseProxy/raw/master/Releases/LatestRelease.rhel.tar.gz
-    [AMSReverseProxy-version-badge]:            https://cdn.rawgit.com/flecoqui/AMSReverseProxy/master/docs/AMSReverseProxybuild.svg
+    [AMSReverseProxy-version-badge]:            https://cdn.rawgit.com/flecoqui/AMSReverseProxy/master/docs/amsreverseproxybuild.svg
     [![Github Release][AMSReverseProxy-version-badge]][rhel-download]
 
 
@@ -62,7 +62,7 @@ The latest releases are available [here](https://github.com/flecoqui/AMSReverseP
 
 
     [osx-download]:                 https://github.com/flecoqui/AMSReverseProxy/raw/master/Releases/LatestRelease.osx.tar.gz
-    [AMSReverseProxy-version-badge]:            https://cdn.rawgit.com/flecoqui/AMSReverseProxy/master/docs/AMSReverseProxybuild.svg
+    [AMSReverseProxy-version-badge]:            https://cdn.rawgit.com/flecoqui/AMSReverseProxy/master/docs/amsreverseproxybuild.svg
     [![Github Release][AMSReverseProxy-version-badge]][osx-download]
 
 
