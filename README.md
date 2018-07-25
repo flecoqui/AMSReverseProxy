@@ -1,4 +1,4 @@
-<img src="Docs/AMSReverseProxy_logo.png">
+<img src="docs/AMSReverseProxy_logo.png">
 
 # What is AMSReverseProxy?
 Adaptive Streaming Tool is an application supporting several features related to Adaptive Streaming. The first version is specifically dedicated to Smooth Streaming.
@@ -10,7 +10,7 @@ For instance, with AMSReverseProxy version 1.0 you can
 
 As AMSReverseProxy is based on .Net Core, the application can be installed on any operating system supporting .Net Core (Windows, Mac OS, Ubuntu, Debian, Centos, Red Hat).
 
-<img src="Docs/AMSReverseProxy_Architecture.png" width="600">
+<img src="docs/AMSReverseProxy_Architecture.png" width="600">
 
 
 The latest releases are available [here](https://github.com/flecoqui/AMSReverseProxy/tree/master/Releases)
@@ -22,14 +22,14 @@ The latest releases are available [here](https://github.com/flecoqui/AMSReverseP
 - [Windows latest release](https://github.com/flecoqui/AMSReverseProxy/raw/master/Releases/LatestRelease.win.zip) </p>
 
     [win-download]:                 https://github.com/flecoqui/AMSReverseProxy/raw/master/Releases/LatestRelease.win.zip
-    [AMSReverseProxy-version-badge]:            https://cdn.rawgit.com/flecoqui/AMSReverseProxy/master/Docs/AMSReverseProxybuild.svg
+    [AMSReverseProxy-version-badge]:            https://cdn.rawgit.com/flecoqui/AMSReverseProxy/master/docs/AMSReverseProxybuild.svg
     [![Github Release][AMSReverseProxy-version-badge]][win-download]
 
 
 - [Ubuntu  latest release](https://github.com/flecoqui/AMSReverseProxy/raw/master/Releases/LatestRelease.ubuntu.tar.gz)</p>
 
     [ubuntu-download]:                 https://github.com/flecoqui/AMSReverseProxy/raw/master/Releases/LatestRelease.ubuntu.tar.gz
-    [AMSReverseProxy-version-badge]:            https://cdn.rawgit.com/flecoqui/AMSReverseProxy/master/Docs/AMSReverseProxybuild.svg
+    [AMSReverseProxy-version-badge]:            https://cdn.rawgit.com/flecoqui/AMSReverseProxy/master/docs/AMSReverseProxybuild.svg
     [![Github Release][AMSReverseProxy-version-badge]][ubuntu-download]
 
 
@@ -37,7 +37,7 @@ The latest releases are available [here](https://github.com/flecoqui/AMSReverseP
 
 
     [debian-download]:                 https://github.com/flecoqui/AMSReverseProxy/raw/master/Releases/LatestRelease.debian.tar.gz
-    [AMSReverseProxy-version-badge]:            https://cdn.rawgit.com/flecoqui/AMSReverseProxy/master/Docs/AMSReverseProxybuild.svg
+    [AMSReverseProxy-version-badge]:            https://cdn.rawgit.com/flecoqui/AMSReverseProxy/master/docs/AMSReverseProxybuild.svg
     [![Github Release][AMSReverseProxy-version-badge]][debian-download]
 
 
@@ -46,7 +46,7 @@ The latest releases are available [here](https://github.com/flecoqui/AMSReverseP
 
 
     [centos-download]:                 https://github.com/flecoqui/AMSReverseProxy/raw/master/Releases/LatestRelease.centos.tar.gz
-    [AMSReverseProxy-version-badge]:            https://cdn.rawgit.com/flecoqui/AMSReverseProxy/master/Docs/AMSReverseProxybuild.svg
+    [AMSReverseProxy-version-badge]:            https://cdn.rawgit.com/flecoqui/AMSReverseProxy/master/docs/AMSReverseProxybuild.svg
     [![Github Release][AMSReverseProxy-version-badge]][centos-download]
 
 
@@ -54,7 +54,7 @@ The latest releases are available [here](https://github.com/flecoqui/AMSReverseP
 
 
     [rhel-download]:                 https://github.com/flecoqui/AMSReverseProxy/raw/master/Releases/LatestRelease.rhel.tar.gz
-    [AMSReverseProxy-version-badge]:            https://cdn.rawgit.com/flecoqui/AMSReverseProxy/master/Docs/AMSReverseProxybuild.svg
+    [AMSReverseProxy-version-badge]:            https://cdn.rawgit.com/flecoqui/AMSReverseProxy/master/docs/AMSReverseProxybuild.svg
     [![Github Release][AMSReverseProxy-version-badge]][rhel-download]
 
 
@@ -62,7 +62,7 @@ The latest releases are available [here](https://github.com/flecoqui/AMSReverseP
 
 
     [osx-download]:                 https://github.com/flecoqui/AMSReverseProxy/raw/master/Releases/LatestRelease.osx.tar.gz
-    [AMSReverseProxy-version-badge]:            https://cdn.rawgit.com/flecoqui/AMSReverseProxy/master/Docs/AMSReverseProxybuild.svg
+    [AMSReverseProxy-version-badge]:            https://cdn.rawgit.com/flecoqui/AMSReverseProxy/master/docs/AMSReverseProxybuild.svg
     [![Github Release][AMSReverseProxy-version-badge]][osx-download]
 
 
@@ -445,7 +445,7 @@ the binaries will be available under:
 If you don't have a local machine to generate the binaries, you can use a virtual Machine running in Azure.
 
 
-![](https://raw.githubusercontent.com/flecoqui/AMSReverseProxy/master/Docs/buildvm.png)
+![](https://raw.githubusercontent.com/flecoqui/AMSReverseProxy/master/docs/buildvm.png)
 
 
 This [Azure Resource Manager template](https://github.com/flecoqui/AMSReverseProxy/tree/master/Azure/101-vm-AMSReverseProxy-universal) allow you to deploy a virtual machine in Azure. You can select the operating system running on this virtual machine, it can be Windows Server 2016, Ubuntu, Debian, Centos or Redhat.
@@ -471,7 +471,7 @@ During the installation of the virtual machine, AMSReverseProxy will be installe
 By default this service will launch the 2 Pull features to capture the audio and video chunks of this sample Live asset: http://b028.wpc.azureedge.net/80B028/Samples/a38e6323-95e9-4f1f-9b38-75eba91704e4/5f2ce531-d508-49fb-8152-647eba422aec.ism/manifest during 3600 seconds.
 
 
-![](https://raw.githubusercontent.com/flecoqui/AMSReverseProxy/master/Docs/singlevm.png)
+![](https://raw.githubusercontent.com/flecoqui/AMSReverseProxy/master/docs/singlevm.png)
 
 
 
@@ -487,7 +487,7 @@ During the installation of the virtual machine, AMSReverseProxy will be installe
 By default on each virtual machine, this service will launch the 2 Pull features to capture the audio and video chunks of this sample Live asset: http://b028.wpc.azureedge.net/80B028/Samples/a38e6323-95e9-4f1f-9b38-75eba91704e4/5f2ce531-d508-49fb-8152-647eba422aec.ism/manifest during 3600 seconds.
 
 
-![](https://raw.githubusercontent.com/flecoqui/AMSReverseProxy/master/Docs/vmscaleset.png)
+![](https://raw.githubusercontent.com/flecoqui/AMSReverseProxy/master/docs/vmscaleset.png)
 
 
 
