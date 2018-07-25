@@ -103,12 +103,16 @@ By default, the application use a JSON file to read the configuration.  By defau
 
 The configuration file name for Windows operating system in Production mode is: 
 
-    win.appsettings.Production.json  [here](https://raw.githubusercontent.com/flecoqui/AMSReverseProxy/master/cs/AMSReverseProxy/AMSReverseProxy/win.appsettings.Production.json)
+    win.appsettings.Production.json
+
+An example of such file is available  [here](https://raw.githubusercontent.com/flecoqui/AMSReverseProxy/master/cs/AMSReverseProxy/AMSReverseProxy/win.appsettings.Production.json)
 
 
 The configuration file name for Linux operating system in Staging mode is: 
 
-    linux.appsettings.Staging.json  [here](https://raw.githubusercontent.com/flecoqui/AMSReverseProxy/master/cs/AMSReverseProxy/AMSReverseProxy/linux.appsettings.Staging.json)
+    linux.appsettings.Staging.json  
+
+An example of such file is available  [here](https://raw.githubusercontent.com/flecoqui/AMSReverseProxy/master/cs/AMSReverseProxy/AMSReverseProxy/linux.appsettings.Staging.json)
 
 
 
