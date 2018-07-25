@@ -114,20 +114,28 @@ The configuration file name for Linux operating system in Staging mode is:
 
 | parameter | value type | default value | Description | 
 | :--- | :--- | :--- |  :--- | 
-|--input| string | null | Uri of the VOD stream or Live stream|
-|--ouput| string | null | Path of the folder where the audio and video chunks will be stored|
-|--minbitrate| int |0  | minimum bitrate of the video tracks to select|
-|--maxbitrate| int |0  | maximum bitrate of the video tracks to select. When the value is 0, all the video tracks with a bitrate over minbitrate value are selected |
-|--maxduration| int |0  | maximum duration of the capture in milliseconds |
-|--audiotrackname&nbsp; &nbsp;&nbsp; &nbsp; &nbsp; &nbsp;&nbsp; &nbsp; &nbsp; &nbsp;&nbsp; &nbsp; &nbsp; &nbsp;&nbsp; &nbsp;&nbsp;| string |null  | name of the audio track to capture, if this value is not set all the audio tracks are captured|
-|--texttrackname| string |null  | name of the text track to capture, if this value is not set all the text tracks are captured|
-|--liveoffset| int | 0  | the offset in seconds with the live position. If this value is not set, AMSReverseProxy will start to capture the audio and video chunk at the beginning of the Live buffer defined in the smooth Streaming manifest|
-|--name| string | null  | name of the service, used for the traces |
-|--counterperiod| int |0  | period in seconds used to display the counters|
-|--tracefile| string | null  | path of the file where the trace will be stored |
-|--tracesize| int |0  | maximum size of the trace file|
-|--tracelevel| string | information  | trace level: none (no log in the trace file), information, error, warning, verbose |
-|--consolelevel| string | information  | console level: none (no log in the console), information, error, warning, verbose |
+|HttpServer:Endpoints:Http:Host| string | information  | console level: none (no log in the console), information, error, warning, verbose |
+|HttpServer:Endpoints:Http:Port| int | information  | console level: none (no log in the console), information, error, warning, verbose |
+|HttpServer:Endpoints:Http:Scheme| string | information  | console level: none (no log in the console), information, error, warning, verbose |
+|HttpServer:Endpoints:Https:Host| string | information  | console level: none (no log in the console), information, error, warning, verbose |
+|HttpServer:Endpoints:Https:Port| int | information  | console level: none (no log in the console), information, error, warning, verbose |
+|HttpServer:Endpoints:Https:Scheme| string | information  | console level: none (no log in the console), information, error, warning, verbose |
+|HttpServer:Endpoints:Https:StoreName| string | information  | console level: none (no log in the console), information, error, warning, verbose |
+|HttpServer:Endpoints:Https:StoreLocation| string | information  | console level: none (no log in the console), information, error, warning, verbose |
+|localDNSName| string | null | Uri of the VOD stream or Live stream|
+|remoteDNSName| string | null | Path of the folder where the audio and video chunks will be stored|
+|liveSubtitleDepthInSeconds| int |0  | minimum bitrate of the video tracks to select|
+|liveSubtitleRefreshPeriodMs| int |0  | maximum bitrate of the video tracks to select. When the value is 0, all the video tracks with a bitrate over minbitrate value are selected |
+|subtitleUrlCount| int |0  | maximum duration of the capture in milliseconds |
+|subtitleUrlList:url| string |null  | name of the audio track to capture, if this value is not set all the audio tracks are captured|
+|Logging:LogLevel:Default| string |null  | name of the text track to capture, if this value is not set all the text tracks are captured|
+|Logging:LogLevel:System| string | 0  | the offset in seconds with the live position. If this value is not set, AMSReverseProxy will start to capture the audio and video chunk at the beginning of the Live buffer defined in the smooth Streaming manifest|
+|Logging:LogLevel:Microsoft| string | null  | name of the service, used for the traces |
+|Logging:Console:IncludeScopes| bool |0  | period in seconds used to display the counters|
+|FileLoggerOptions:FileSizeLimit| int | null  | path of the file where the trace will be stored |
+|FileLoggerOptions:RetainedFileCountLimit| int |0  | maximum size of the trace file|
+|FileLoggerOptions:FileName| string | information  | trace level: none (no log in the trace file), information, error, warning, verbose |
+|FileLoggerOptions:LogDirectory| string | information  | console level: none (no log in the console), information, error, warning, verbose |
 
 
 ### Configuration File content Examples
