@@ -112,33 +112,42 @@ The configuration file name for Linux operating system in Staging mode is:
 
 
 
-| parameter | value type | default value | Description | 
+| Parameter | Type | default value | Description | 
 | :--- | :--- | :--- |  :--- | 
-|HttpServer:Endpoints:Http:Host| string | information  | console level: none (no log in the console), information, error, warning, verbose |
-|HttpServer:Endpoints:Http:Port| int | information  | console level: none (no log in the console), information, error, warning, verbose |
-|HttpServer:Endpoints:Http:Scheme| string | information  | console level: none (no log in the console), information, error, warning, verbose |
-|HttpServer:Endpoints:Https:Host| string | information  | console level: none (no log in the console), information, error, warning, verbose |
-|HttpServer:Endpoints:Https:Port| int | information  | console level: none (no log in the console), information, error, warning, verbose |
-|HttpServer:Endpoints:Https:Scheme| string | information  | console level: none (no log in the console), information, error, warning, verbose |
-|HttpServer:Endpoints:Https:StoreName| string | information  | console level: none (no log in the console), information, error, warning, verbose |
-|HttpServer:Endpoints:Https:StoreLocation| string | information  | console level: none (no log in the console), information, error, warning, verbose |
-|localDNSName| string | null | Uri of the VOD stream or Live stream|
-|remoteDNSName| string | null | Path of the folder where the audio and video chunks will be stored|
-|liveSubtitleDepthInSeconds| int |0  | minimum bitrate of the video tracks to select|
-|liveSubtitleRefreshPeriodMs| int |0  | maximum bitrate of the video tracks to select. When the value is 0, all the video tracks with a bitrate over minbitrate value are selected |
-|subtitleUrlCount| int |0  | maximum duration of the capture in milliseconds |
-|subtitleUrlList:url| string |null  | name of the audio track to capture, if this value is not set all the audio tracks are captured|
-|Logging:LogLevel:Default| string |null  | name of the text track to capture, if this value is not set all the text tracks are captured|
-|Logging:LogLevel:System| string | 0  | the offset in seconds with the live position. If this value is not set, AMSReverseProxy will start to capture the audio and video chunk at the beginning of the Live buffer defined in the smooth Streaming manifest|
-|Logging:LogLevel:Microsoft| string | null  | name of the service, used for the traces |
-|Logging:Console:IncludeScopes| bool |0  | period in seconds used to display the counters|
-|FileLoggerOptions:FileSizeLimit| int | null  | path of the file where the trace will be stored |
-|FileLoggerOptions:RetainedFileCountLimit| int |0  | maximum size of the trace file|
-|FileLoggerOptions:FileName| string | information  | trace level: none (no log in the trace file), information, error, warning, verbose |
-|FileLoggerOptions:LogDirectory| string | information  | console level: none (no log in the console), information, error, warning, verbose |
+|HttpServer:Endpoints:Http:Host| string | null  | Host associated with http reverse proxy endpoint (localhost, IP address or DNS name) |
+|HttpServer:Endpoints:Http:Port| int | 0  | TCP port associated with http reverse proxy endpoint  |
+|HttpServer:Endpoints:Http:Scheme| string | null  | Protcol associated with http reverse proxy endpoint  allowed values are http or https |
+|HttpServer:Endpoints:Https:Host| string | null  | Host associated with the https reverse proxy endpoints (localhost, IP address or DNS name)  |
+|HttpServer:Endpoints:Https:Port| int | 0  | TCP port associated with https reverse proxy endpoints  |
+|HttpServer:Endpoints:Https:Scheme| string | null  | Protcol associated with the reverse proxy allowed values are http or https |
+|HttpServer:Endpoints:Https:StoreName| string | null  | Store Name where the X509 certificate is stored (for instance: My) |
+|HttpServer:Endpoints:Https:StoreLocation| string | null  | Store location where the X509 certificate is stored (for instance: CurrentUser) |
+|localDNSName| string | null | Host and TCP port associated with reverse proxy endpoint (for instance localhost:8080)|
+|remoteDNSName| string | null | Host and TCP port associated with Azure Media Services endpoint|
+|liveSubtitleDepthInSeconds| int | 0 | Live Subtitle Depth in seconds, when this duration of TTML subtitles is converted into WebVTT, the HLS playlist will be updated to include the WebVTT track|
+|liveSubtitleRefreshPeriodMs| int | 0 | The period in seconds used to refresh the list of TTML chunks (Period to read the Smooth Streaming manifest)  |
+|subtitleUrlCount| int | 0 | Number of pre-defined Smooth Streaming asset url which should be analyzed once the reverse proxy is started |
+|subtitleUrlList:url| string | null | Smooth Streaming asset url which should be analyzed once the reverse proxy is started |
+|Logging:LogLevel:Default| string | null | Default Log Level, allowed values (Trace, Debug, Information, Warning, Error, Critical, None)|
+|Logging:LogLevel:System| string | 0  | System Log Level, allowed values (Trace, Debug, Information, Warning, Error, Critical, None) |
+|Logging:LogLevel:Microsoft| string | null  | Microsoft Log Level, allowed values (Trace, Debug, Information, Warning, Error, Critical, None) |
+|Logging:Console:IncludeScopes| bool | false | Specify if log scopes are enabled in the Console logs |
+|FileLoggerOptions:FileSizeLimit| int | 10485760 | Maximum size of the Log file  |
+|FileLoggerOptions:RetainedFileCountLimit| int | 2 | Maximum number of Log files retained |
+|FileLoggerOptions:FileName| string | ams-logs-  | Suffix of the log file name |
+|FileLoggerOptions:LogDirectory| string | AMSLogs  | Name of the directory where the log files are stored |
 
 
 ### Configuration File content Examples
+
+Below a sample configuration file used while running the Reverse Proxy on a local machine. With this configuration file two Smooth Streaming assets (Live or VOD) will be analyzed when the service will start. If those assets contains TTML Subtitles, those subtitles will be converted into WebVTT subtitle. In that case, the assets associated with the two urls below will be updated to include the WebVTT subtitles:
+- http://testamsmedia.streaming.mediaservices.windows.net/18003c32-3453-47ef-9547-2255188a2242/asset.ism/manifest(format=m3u8-aapl)
+- http://testamsmedia.streaming.mediaservices.windows.net/7c2c4406-105a-418f-b4b4-4a98a6d65532/6193b18a-4410-4f08-b0cc-b1d59545223f.ism/manifest(format=m3u8-aapl)
+
+In order to play the WebVTT subtitles with the HLS content, the player will have to open the following urls:
+- http://localhost:8080/18003c32-3453-47ef-9547-2255188a2242/asset.ism/manifest(format=m3u8-aapl)
+- http://localhost:8080/7c2c4406-105a-418f-b4b4-4a98a6d65532/6193b18a-4410-4f08-b0cc-b1d59545223f.ism/manifest(format=m3u8-aapl)
+
 
     {
         "HttpServer": {
@@ -187,6 +196,11 @@ The configuration file name for Linux operating system in Staging mode is:
         "LogDirectory": "AMSLogs"
         }
     }
+
+
+Now the configuration file is ready, you can launch the application. Before launching the application you need to set two ASPNETCORE variables:
+- ASPNETCORE_ENVIRONMENT
+- ASPNETCORE_preventHostingStartup
 
 ## Examples
 
