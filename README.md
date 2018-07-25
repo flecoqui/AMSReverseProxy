@@ -153,6 +153,9 @@ In order to play the WebVTT subtitles with the HLS content, the player will have
 - http://localhost:8080/7c2c4406-105a-418f-b4b4-4a98a6d65532/6193b18a-4410-4f08-b0cc-b1d59545223f.ism/manifest(format=m3u8-aapl)
 
 
+Below the content of the sample configuration file:
+
+
     {
         "HttpServer": {
             "Endpoints": {
